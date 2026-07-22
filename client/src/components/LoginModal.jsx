@@ -179,23 +179,42 @@ export default function LoginModal({ onClose, onLoginSuccess, isMandatory = fals
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
           {isRegister && (
-            <div>
-              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                Full Name *
-              </label>
-              <input 
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Dr. Alex Vance"
-                style={{
-                  width: '100%', background: 'rgba(15, 23, 42, 0.8)',
-                  border: '1px solid var(--border-color)', color: '#ffffff',
-                  padding: '0.7rem', borderRadius: 'var(--radius-md)', outline: 'none'
-                }}
-              />
-            </div>
+            <>
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                  Full Name *
+                </label>
+                <input 
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Rahul Sharma"
+                  style={{
+                    width: '100%', background: 'rgba(15, 23, 42, 0.8)',
+                    border: '1px solid var(--border-color)', color: '#ffffff',
+                    padding: '0.7rem', borderRadius: 'var(--radius-md)', outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                  Phone Number (Optional)
+                </label>
+                <input 
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="e.g. +91 98765 43210"
+                  style={{
+                    width: '100%', background: 'rgba(15, 23, 42, 0.8)',
+                    border: '1px solid var(--border-color)', color: '#ffffff',
+                    padding: '0.7rem', borderRadius: 'var(--radius-md)', outline: 'none'
+                  }}
+                />
+              </div>
+            </>
           )}
 
           <div>
@@ -207,7 +226,7 @@ export default function LoginModal({ onClose, onLoginSuccess, isMandatory = fals
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. admin or admin@medicare.com"
+              placeholder={isRegister ? "e.g. rahul@example.com" : "e.g. admin or admin@medicare.com"}
               style={{
                 width: '100%', background: 'rgba(15, 23, 42, 0.8)',
                 border: '1px solid var(--border-color)', color: '#ffffff',
@@ -246,7 +265,20 @@ export default function LoginModal({ onClose, onLoginSuccess, isMandatory = fals
           <div style={{ textAlign: 'center', marginTop: '0.75rem' }}>
             <button
               type="button"
-              onClick={() => setIsRegister(!isRegister)}
+              onClick={() => {
+                const nextState = !isRegister;
+                setIsRegister(nextState);
+                setErrorMessage('');
+                if (nextState) {
+                  setName('');
+                  setEmail('');
+                  setPassword('');
+                  setPhone('');
+                } else {
+                  setEmail('admin');
+                  setPassword('pass123!');
+                }
+              }}
               style={{ background: 'none', border: 'none', color: 'var(--accent-cyan)', fontSize: '0.85rem', cursor: 'pointer' }}
             >
               {isRegister ? 'Already registered? Sign In' : "Don't have an account? Register new account"}

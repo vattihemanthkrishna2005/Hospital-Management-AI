@@ -3,15 +3,12 @@ name: Deploy Backend to Azure Container Apps
 on:
   push:
     branches: [main]
-    paths:
-      - 'server/**'
-      - '.github/workflows/deploy-backend.yml'
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/medicare-backend
-  AZURE_RESOURCE_GROUP: rg-hospital-demo
+  AZURE_RESOURCE_GROUP: rg-medicare-hospital
   AZURE_CONTAINER_APP: medicare-backend-api
   AZURE_CONTAINER_ENV: container-env-hospital
 

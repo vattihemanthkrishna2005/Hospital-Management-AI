@@ -4,33 +4,37 @@ const { getQuery, runQuery } = require('../config/db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'medicare_hub_super_secret_jwt_key_2026';
 
-// Register User (Role PATIENT or ADMIN)
+// Register User (Default Role: PATIENT)
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, phone, role, tenant_id } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Name, email, and password are required.' });
+    const { name, email, password, phone } = req.body;
+    if (!name || !name.trim() || !email || !email.trim() || !password || !password.trim()) {
+      return res.status(400).json({ error: 'Full name, email/username, and password are required.' });
     }
 
-    const tenantId = tenant_id || 'tenant_central_medicare';
-    // SECURITY FIX: Public registration ALWAYS creates PATIENT accounts only.
-    // Admin accounts can only be created via database seed or by existing admins.
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPass = password.trim();
+    const tenantId = 'tenant_central_medicare';
     const userRole = 'PATIENT';
 
-    const existingUser = await getQuery('SELECT id FROM users WHERE LOWER(email) = LOWER(?)', [email]);
+    const existingUser = await getQuery(
+      'SELECT id FROM users WHERE LOWER(email) = ? OR LOWER(name) = ?',
+      [trimmedEmail, trimmedName.toLowerCase()]
+    );
     if (existingUser) {
-      return res.status(400).json({ error: 'An account with this email or username already exists.' });
+      return res.status(400).json({ error: 'An account with this email or username already exists. Please sign in instead.' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(trimmedPass, 10);
 
     const result = await runQuery(
       'INSERT INTO users (tenant_id, name, email, password, role, phone) VALUES (?, ?, ?, ?, ?, ?)',
-      [tenantId, name, email, hashedPassword, userRole, phone || '']
+      [tenantId, trimmedName, trimmedEmail, hashedPassword, userRole, phone ? phone.trim() : '']
     );
 
     const token = jwt.sign(
-      { id: result.id, name, email, role: userRole, tenantId },
+      { id: result.id, name: trimmedName, email: trimmedEmail, role: userRole, tenantId },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -38,7 +42,7 @@ exports.register = async (req, res) => {
     res.status(201).json({
       message: 'Registration successful',
       token,
-      user: { id: result.id, name, email, role: userRole, phone, tenantId }
+      user: { id: result.id, name: trimmedName, email: trimmedEmail, role: userRole, phone: phone || '', tenantId }
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

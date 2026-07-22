@@ -71,7 +71,9 @@
   - **Azure Subscription Policy Discovery**: Identified Azure Student Account policy restriction (`sys.regionrestriction`), allowing deployments in `eastasia` (East Asia - closest allowed high-speed region to India).
   - **Resource Provisioning**: Created resource group `rg-medicare-hospital` in `eastasia`.
   - **Log Analytics Workspace**: Successfully provisioned `log-medicare-hospital` in `eastasia`.
-  - **Container Apps Environment**: `container-env-hospital` successfully created and active in `eastasia`.
-- **Status**: Completed & Fully Documented.
+  - **Container Apps Environment**: `container-env-hospital` active in `eastasia`.
+  - **Live Backend API**: `https://medicare-backend-api.happybeach-ad1e66f4.eastasia.azurecontainerapps.io/`
+  - **Live Frontend Web App**: `https://victorious-forest-038e48300.7.azurestaticapps.net`
+- **Status**: Completed & Fully Deployed Live.
 
 
