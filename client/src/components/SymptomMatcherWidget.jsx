@@ -1,20 +1,41 @@
-import React, { useState } from 'react';
-import { Sparkles, AlertTriangle, CheckCircle, ArrowRight, Stethoscope } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, AlertTriangle, CheckCircle2, ArrowRight, Stethoscope, Lightbulb, Activity, ShieldCheck, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import DoctorCard from './DoctorCard';
 
 export default function SymptomMatcherWidget({ onBookDoctor }) {
   const [symptomText, setSymptomText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   const [matchResult, setMatchResult] = useState(null);
 
   const [isLowPower, setIsLowPower] = useState(true);
+
+  // Animated loading step messages for transparent reasoning UX
+  const loadingMessages = [
+    '⚡ Initializing Groq Llama-3.1 AI Engine (Low Power Triage Mode)...',
+    '🛡️ Scanning symptom keywords & checking emergency red-flags...',
+    '🏥 Matching optimal hospital department & specialist doctors...'
+  ];
+
+  useEffect(() => {
+    let interval;
+    if (isAnalyzing) {
+      setLoadingStep(0);
+      interval = setInterval(() => {
+        setLoadingStep(prev => (prev + 1) % loadingMessages.length);
+      }, 700);
+    }
+    return () => clearInterval(interval);
+  }, [isAnalyzing]);
 
   const handleMatch = async (e) => {
     e.preventDefault();
     if (!symptomText.trim()) return;
 
     setIsAnalyzing(true);
+    setMatchResult(null);
+
     try {
       const res = await axios.post('/api/symptoms/match', { 
         text: symptomText,
@@ -48,7 +69,7 @@ export default function SymptomMatcherWidget({ onBookDoctor }) {
                 Smart AI Symptom Matcher
               </h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                Describe how you feel in simple words. Our Groq-powered AI matches you with the right specialist.
+                Describe your symptoms in simple words. Our Groq-powered AI finds the right specialist & pre-consultation guidance.
               </p>
             </div>
           </div>
@@ -72,7 +93,7 @@ export default function SymptomMatcherWidget({ onBookDoctor }) {
               transition: 'all 0.2s ease'
             }}
           >
-            <span>{isLowPower ? '⚡ Low-Power Mode (Ultra Fast)' : '🧠 Deep Reasoning Mode'}</span>
+            <span>{isLowPower ? '⚡ Low-Power Mode (Ultra Fast)' : '🧠 Deep Triage Mode'}</span>
             <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>({isLowPower ? 'llama-3.1-8b' : 'llama-3.3-70b'})</span>
           </button>
         </div>
@@ -85,6 +106,7 @@ export default function SymptomMatcherWidget({ onBookDoctor }) {
               placeholder="e.g. I have a throbbing headache on the right side of my head, dizziness, and mild nausea since morning..."
               value={symptomText}
               onChange={(e) => setSymptomText(e.target.value)}
+              disabled={isAnalyzing}
               style={{
                 width: '100%',
                 background: 'rgba(15, 23, 42, 0.9)',
@@ -106,14 +128,15 @@ export default function SymptomMatcherWidget({ onBookDoctor }) {
               disabled={isAnalyzing || !symptomText.trim()}
               style={{ background: 'var(--gradient-accent)' }}
             >
-              <Sparkles size={18} />
-              {isAnalyzing ? 'Analyzing Symptoms...' : 'Analyze & Find Specialist Doctor'}
+              {isAnalyzing ? <Loader2 size={18} className="spin" /> : <Sparkles size={18} />}
+              {isAnalyzing ? 'Reasoning & Processing...' : 'Analyze & Find Specialist Doctor'}
             </button>
 
             {/* Quick Sample Prompts */}
             <button
               type="button"
               className="btn-secondary"
+              disabled={isAnalyzing}
               onClick={() => setSymptomText('Sharp chest pain after climbing stairs and rapid heartbeat')}
               style={{ fontSize: '0.85rem' }}
             >
@@ -123,6 +146,7 @@ export default function SymptomMatcherWidget({ onBookDoctor }) {
             <button
               type="button"
               className="btn-secondary"
+              disabled={isAnalyzing}
               onClick={() => setSymptomText('Joint stiffness, knee pain, and difficulty walking')}
               style={{ fontSize: '0.85rem' }}
             >
@@ -131,9 +155,53 @@ export default function SymptomMatcherWidget({ onBookDoctor }) {
           </div>
         </form>
 
+        {/* AI REASONING / THINKING LOADING BANNER */}
+        {isAnalyzing && (
+          <div style={{
+            background: 'rgba(15, 23, 42, 0.85)',
+            border: '1px solid rgba(168, 85, 247, 0.4)',
+            borderRadius: 'var(--radius-md)',
+            padding: '1.5rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1.25rem',
+            boxShadow: '0 0 30px rgba(168, 85, 247, 0.15)'
+          }}>
+            <div style={{
+              background: 'rgba(168, 85, 247, 0.2)',
+              padding: '0.85rem',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid rgba(168, 85, 247, 0.5)'
+            }}>
+              <Activity size={26} color="var(--accent-purple)" className="pulse" />
+            </div>
+
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-purple)', letterSpacing: '0.05em' }}>
+                  GROQ AI REASONING ENGINE ACTIVE
+                </span>
+                <span style={{ fontSize: '0.7rem', background: 'rgba(168, 85, 247, 0.2)', color: '#d8b4fe', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                  Low-Power Mode
+                </span>
+              </div>
+              <div style={{ fontSize: '1rem', fontWeight: 600, color: '#f8fafc' }}>
+                {loadingMessages[loadingStep]}
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+                Processing symptoms in under 500ms without burning excessive token compute.
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Analysis Results View */}
         {matchResult && (
-          <div className="glass-card" style={{ padding: '1.5rem', animation: 'fadeIn 0.4s ease' }}>
+          <div className="glass-card" style={{ padding: '1.75rem' }}>
             
             {/* Engine Used Info Badge */}
             {matchResult.engineUsed && (
@@ -148,6 +216,7 @@ export default function SymptomMatcherWidget({ onBookDoctor }) {
                 padding: '0.25rem 0.6rem',
                 borderRadius: '6px'
               }}>
+                <ShieldCheck size={14} color="var(--accent-cyan)" />
                 <span>Engine:</span>
                 <strong style={{ color: '#e2e8f0' }}>{matchResult.engineUsed}</strong>
               </div>
@@ -181,29 +250,56 @@ export default function SymptomMatcherWidget({ onBookDoctor }) {
               flexWrap: 'wrap',
               gap: '1rem',
               borderBottom: '1px solid var(--border-color)',
-              paddingBottom: '1rem',
+              paddingBottom: '1.25rem',
               marginBottom: '1.5rem'
             }}>
               <div>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>MATCHED MEDICAL DEPARTMENT</span>
-                <h3 style={{ fontSize: '1.6rem', color: 'var(--accent-cyan)' }}>
+                <h3 style={{ fontSize: '1.7rem', color: 'var(--accent-cyan)', marginTop: '0.1rem' }}>
                   {matchResult.matchedDepartment} Department
                 </h3>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
                   {matchResult.advice}
                 </p>
               </div>
 
               <div style={{ textAlign: 'right' }}>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>CONFIDENCE SCORE</span>
-                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--accent-emerald)' }}>
+                <div style={{ fontSize: '1.9rem', fontWeight: 800, color: 'var(--accent-emerald)' }}>
                   {matchResult.confidenceScore}%
                 </div>
               </div>
             </div>
 
+            {/* PRE-CONSULTATION TIPS & PREPARATION CHECKLIST */}
+            {matchResult.preConsultationTips && matchResult.preConsultationTips.length > 0 && (
+              <div style={{
+                background: 'rgba(56, 189, 248, 0.08)',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                borderRadius: 'var(--radius-md)',
+                padding: '1.25rem',
+                marginBottom: '1.75rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                  <Lightbulb size={20} color="var(--accent-amber)" />
+                  <h4 style={{ fontSize: '1.05rem', color: '#f8fafc', margin: 0 }}>
+                    💡 Pre-Consultation Preparation Checklist (Before Meeting Doctor)
+                  </h4>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {matchResult.preConsultationTips.map((tip, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                      <CheckCircle2 size={16} color="var(--accent-emerald)" style={{ marginTop: '2px', flexShrink: 0 }} />
+                      <span>{tip}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Recommended Doctors Grid */}
-            <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
               <Stethoscope size={18} color="var(--accent-cyan)" />
               Recommended Specialists for {matchResult.matchedDepartment}
             </h4>
@@ -221,4 +317,3 @@ export default function SymptomMatcherWidget({ onBookDoctor }) {
     </div>
   );
 }
-

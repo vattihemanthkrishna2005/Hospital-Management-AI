@@ -67,17 +67,21 @@ exports.matchSymptoms = async (req, res) => {
 
     if (groq) {
       try {
-        const systemPrompt = `You are a fast medical triage classifier.
-DO NOT engage in long reasoning or step-by-step thinking.
-Classify symptoms directly into ONE department:
+        const systemPrompt = `You are a fast medical triage assistant.
+Classify symptoms into ONE department:
 [Cardiology, Neurology, Orthopedics, Pediatrics, Dermatology, General Medicine]
 
-Return ONLY valid JSON matching this format:
+Return ONLY valid JSON matching this schema:
 {
   "matchedDepartment": "Department Name",
-  "confidenceScore": integer 70-95,
+  "confidenceScore": integer 75-95,
   "matchedKeywords": ["keyword1", "keyword2"],
-  "advice": "1 short sentence of advice"
+  "advice": "1 short sentence of advice",
+  "preConsultationTips": [
+    "Practical tip 1 before meeting doctor",
+    "Practical tip 2 before meeting doctor",
+    "Practical tip 3 before meeting doctor"
+  ]
 }`;
 
         const chatCompletion = await groq.chat.completions.create({
@@ -86,8 +90,8 @@ Return ONLY valid JSON matching this format:
             { role: 'user', content: `Symptoms: "${text}"` }
           ],
           model: selectedModel,
-          temperature: 0.0,
-          max_tokens: 120,
+          temperature: 0.1,
+          max_tokens: 180,
           response_format: { type: 'json_object' }
         });
 
@@ -124,7 +128,12 @@ Return ONLY valid JSON matching this format:
         matchedDepartment: primaryDepartment,
         confidenceScore: matches.length > 0 ? Math.min(100, matches[0].score + 40) : 70,
         matchedKeywords: matches.length > 0 ? matches[0].matchedKeywords : [],
-        advice: primaryAdvice
+        advice: primaryAdvice,
+        preConsultationTips: [
+          'Note down the exact time your symptoms started & severity level.',
+          'Bring a list of current medications, supplements, and known allergies.',
+          'Prepare key health questions to discuss during your consultation.'
+        ]
       };
     }
 
@@ -139,6 +148,11 @@ Return ONLY valid JSON matching this format:
       confidenceScore: resultData.confidenceScore || 85,
       matchedKeywords: resultData.matchedKeywords || [],
       advice: resultData.advice,
+      preConsultationTips: resultData.preConsultationTips || [
+        'Note down the exact time your symptoms started & severity level.',
+        'Bring a list of current medications, supplements, and known allergies.',
+        'Prepare key health questions to discuss during your consultation.'
+      ],
       isEmergency,
       emergencyWarning: isEmergency ? '🚨 Red Flag Detected: If this is an emergency, please visit the nearest ER or dial 911 immediately!' : null,
       engineUsed,
