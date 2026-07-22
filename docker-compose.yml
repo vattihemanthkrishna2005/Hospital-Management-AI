@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: medicare_backend_api
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - JWT_SECRET=medicare_hub_azure_student_secret_2026
+      # For Azure SQL deployment, pass DB_HOST & AZURE_SQL_CONNECTION_STRING here:
+      # - DB_HOST=medicare-sql-server-demo.database.windows.net
+      # - AZURE_SQL_CONNECTION_STRING=Server=tcp:medicare-sql-server-demo.database.windows.net,1433;...
+    volumes:
+      - medicare_db_data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: medicare_frontend_web
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  medicare_db_data:
+    driver: local
