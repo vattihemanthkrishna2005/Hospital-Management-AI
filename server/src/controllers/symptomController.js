@@ -47,6 +47,7 @@ const symptomRules = [
 exports.matchSymptoms = async (req, res) => {
   try {
     const { text, lowPowerMode } = req.body;
+    const isLowPower = lowPowerMode !== false;
     if (!text || text.trim().length === 0) {
       return res.status(400).json({ error: 'Symptom description is required.' });
     }
