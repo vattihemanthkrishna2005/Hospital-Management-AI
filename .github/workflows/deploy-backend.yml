@@ -56,3 +56,9 @@ jobs:
           imageToDeploy: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           targetPort: 5000
           ingress: external
+          environmentVariables: |
+            PORT=5000
+            NODE_ENV=production
+            JWT_SECRET=medicare_hub_azure_student_secret_2026
+            GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+            AI_MODE=low_power
